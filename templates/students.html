@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>All Students - EduAnalytics</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700;900&amp;display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#ec5b13",
+                        "background-light": "#f8f6f6",
+                        "background-dark": "#221610"
+                    },
+                    fontFamily: {
+                        "display": ["Public Sans", "sans-serif"]
+                    }
+                }
+            }
+        }
+    </script>
+    <style>body { font-family: 'Public Sans', sans-serif; } .material-symbols-outlined { font-size: 24px; vertical-align: middle; }</style>
+</head>
+<body class="min-h-screen bg-background-light text-slate-900 font-display">
+    <div class="max-w-7xl mx-auto px-4 py-10">
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="mb-4 rounded-xl px-4 py-3 text-sm font-medium 
+            {% if category == 'error' %}bg-rose-50 text-rose-600 border border-rose-200
+            {% else %}bg-emerald-50 text-emerald-600 border border-emerald-200{% endif %}">
+        {{ message }}
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8">
+            <div>
+                <h1 class="text-3xl font-bold">All Students</h1>
+                <p class="text-sm text-slate-500 mt-1">Manage student records, marks, and performance data.</p>
+            </div>
+            <div class="flex flex-wrap gap-3">
+                <a href="{{ url_for('dashboard') }}" class="rounded-xl bg-slate-900 text-white px-4 py-2 text-sm flex items-center gap-1">
+                    <span class="material-symbols-outlined text-sm">dashboard</span> Dashboard
+                </a>
+                <a href="{{ url_for('home') }}" class="rounded-xl bg-slate-700 text-white px-4 py-2 text-sm flex items-center gap-1">
+                    <span class="material-symbols-outlined text-sm">trending_up</span> Predictions
+                </a>
+                <a href="{{ url_for('add_student') }}" class="rounded-xl bg-primary text-white px-4 py-2 text-sm flex items-center gap-1">
+                    <span class="material-symbols-outlined text-sm">person_add</span> Add Student
+                </a>
+            </div>
+        </div>
+
+        {% if students %}
+        <div class="overflow-x-auto rounded-3xl border border-slate-200 bg-white shadow-sm">
+            <table class="w-full min-w-[800px] divide-y divide-slate-200 text-left">
+                <thead class="bg-slate-100">
+                    <tr>
+                        <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-500">ID</th>
+                        <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-500">Name</th>
+                        <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-500">Department</th>
+                        <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-500">Marks</th>
+                        <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-500">Attendance</th>
+                        <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-500">Risk Level</th>
+                        <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-500">Grade</th>
+                        <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-500">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-200">
+                    {% for s in students %}
+                    <tr class="hover:bg-slate-50 transition-colors">
+                        <td class="px-6 py-4 text-sm text-slate-700">{{ s.id }}</td>
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-full bg-{{ s.risk_color }}-100 flex items-center justify-center text-{{ s.risk_color }}-600 text-[10px] font-bold">{{ s.initials }}</div>
+                                <span class="text-sm font-medium text-slate-900">{{ s.name }}</span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-slate-500">{{ s.department }}</td>
+                        <td class="px-6 py-4 text-sm font-medium text-slate-700">{{ s.marks }}%</td>
+                        <td class="px-6 py-4 text-sm text-slate-700">{{ s.attendance }}%</td>
+                        <td class="px-6 py-4">
+                            <span class="px-2 py-1 rounded-full text-[10px] font-bold 
+                                {% if s.risk_level == 'Excellent' %}bg-emerald-100 text-emerald-600
+                                {% elif s.risk_level == 'Stable' %}bg-blue-100 text-blue-600
+                                {% elif s.risk_level == 'At Risk' %}bg-amber-100 text-amber-600
+                                {% else %}bg-rose-100 text-rose-600{% endif %}">{{ s.risk_level }}</span>
+                        </td>
+                        <td class="px-6 py-4 text-sm font-bold text-primary">{{ s.predicted_grade }}</td>
+                        <td class="px-6 py-4 text-sm text-slate-700 space-x-2">
+                            <a href="{{ url_for('edit_student', id=s.id) }}" class="rounded-lg px-3 py-2 bg-slate-900 text-white text-xs font-semibold hover:bg-slate-700 transition-colors">Edit</a>
+                            <a href="{{ url_for('delete_student', id=s.id) }}" onclick="return confirm('Are you sure you want to delete this student?')" class="rounded-lg px-3 py-2 bg-rose-500 text-white text-xs font-semibold hover:bg-rose-600 transition-colors">Delete</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <p class="text-xs text-slate-400 mt-4 text-center">{{ students|length }} student(s) total</p>
+        {% else %}
+        <div class="rounded-3xl border border-slate-200 bg-white shadow-sm p-12 text-center">
+            <span class="material-symbols-outlined text-5xl text-slate-300 mb-4">school</span>
+            <h2 class="text-xl font-bold text-slate-700 mb-2">No students found</h2>
+            <p class="text-sm text-slate-500 mb-6">Get started by adding your first student.</p>
+            <a href="{{ url_for('add_student') }}" class="rounded-xl bg-primary text-white px-6 py-3 text-sm font-bold">Add Your First Student</a>
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>

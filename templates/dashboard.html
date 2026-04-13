@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>EduAnalytics - Performance Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+    tailwind.config = {
+        darkMode: "class",
+        theme: {
+            extend: {
+                colors: {
+                    "primary": "#ec5b13",
+                    "background-light": "#f8f6f6",
+                    "background-dark": "#221610",
+                },
+                fontFamily: {
+                    "display": ["Public Sans", "sans-serif"]
+                },
+                borderRadius: {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+                },
+            },
+        },
+    }
+</script>
+<style>
+    body { font-family: 'Public Sans', sans-serif; }
+    .material-symbols-outlined { font-size: 24px; vertical-align: middle; }
+</style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display">
+<div class="flex min-h-screen">
+<!-- Side Navigation -->
+<aside class="w-64 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col fixed h-full">
+<div class="p-6 flex items-center gap-3">
+<div class="bg-primary rounded-lg p-2 flex items-center justify-center text-white">
+<span class="material-symbols-outlined">analytics</span>
+</div>
+<div>
+<h1 class="text-lg font-bold leading-none">EduAnalytics</h1>
+<p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Admin Portal</p>
+</div>
+</div>
+<nav class="flex-1 px-4 py-4 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-primary text-white" href="{{ url_for('dashboard') }}">
+<span class="material-symbols-outlined fill-1">dashboard</span>
+<span class="text-sm font-medium">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" href="{{ url_for('students') }}">
+<span class="material-symbols-outlined">group</span>
+<span class="text-sm font-medium">Student Records</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" href="{{ url_for('home') }}">
+<span class="material-symbols-outlined">auto_awesome</span>
+<span class="text-sm font-medium">Predictions</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" href="{{ url_for('add_student') }}">
+<span class="material-symbols-outlined">person_add</span>
+<span class="text-sm font-medium">Add Student</span>
+</a>
+</nav>
+<div class="p-4 border-t border-slate-200 dark:border-slate-800">
+<div class="mt-4 flex items-center gap-3 px-3 py-2">
+<div class="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary text-xs font-bold">AR</div>
+<div class="overflow-hidden">
+<p class="text-xs font-bold truncate">Alex Rivera</p>
+<p class="text-[10px] text-slate-500">Super Admin</p>
+</div>
+<a href="{{ url_for('logout') }}" class="ml-auto">
+<span class="material-symbols-outlined text-slate-400 text-sm">logout</span>
+</a>
+</div>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="flex-1 ml-64 p-8">
+<!-- Flash Messages -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+{% for category, message in messages %}
+<div class="mb-4 rounded-xl px-4 py-3 text-sm font-medium 
+    {% if category == 'error' %}bg-rose-50 text-rose-600 border border-rose-200
+    {% else %}bg-emerald-50 text-emerald-600 border border-emerald-200{% endif %}">
+{{ message }}
+</div>
+{% endfor %}
+{% endif %}
+{% endwith %}
+
+<!-- Header -->
+<header class="flex items-center justify-between mb-8">
+<div>
+<h2 class="text-2xl font-bold tracking-tight">Performance Overview</h2>
+<p class="text-slate-500 dark:text-slate-400">Academic Year 2024-2025 • Real-time Analytics</p>
+<p class="text-sm text-slate-500 dark:text-slate-400 mt-1">{{ suggestion }}</p>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+<input class="pl-10 pr-4 py-2 rounded-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:ring-primary focus:border-primary text-sm w-64" placeholder="Search students..." type="text"/>
+</div>
+<button class="p-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 relative">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+</div>
+</header>
+<!-- Summary Cards -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+<div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+<div class="flex justify-between items-start mb-4">
+<div class="p-2 bg-primary/10 rounded-lg">
+<span class="material-symbols-outlined text-primary">person_search</span>
+</div>
+</div>
+<p class="text-slate-500 dark:text-slate-400 text-sm font-medium">Total Students</p>
+<h3 class="text-3xl font-bold mt-1">{{ total_students }}</h3>
+<div class="mt-4 w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
+<div class="bg-primary h-full rounded-full" style="width: {{ [total_students, 100]|min }}%"></div>
+</div>
+</div>
+<div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+<div class="flex justify-between items-start mb-4">
+<div class="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+<span class="material-symbols-outlined text-blue-600 dark:text-blue-400">how_to_reg</span>
+</div>
+</div>
+<p class="text-slate-500 dark:text-slate-400 text-sm font-medium">Average Marks</p>
+<h3 class="text-3xl font-bold mt-1">{{ avg_marks }}%</h3>
+<div class="mt-4 w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
+<div class="bg-blue-500 h-full rounded-full" style="width: {{ avg_marks }}%"></div>
+</div>
+</div>
+<div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+<div class="flex justify-between items-start mb-4">
+<div class="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-lg">
+<span class="material-symbols-outlined text-amber-600 dark:text-amber-400">target</span>
+</div>
+</div>
+<p class="text-slate-500 dark:text-slate-400 text-sm font-medium">Pass Rate</p>
+<h3 class="text-3xl font-bold mt-1">{{ pass_percentage }}%</h3>
+<div class="mt-4 w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
+<div class="bg-amber-500 h-full rounded-full" style="width: {{ pass_percentage }}%"></div>
+</div>
+</div>
+</div>
+<!-- Performance Analysis Section -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+<!-- Pass/Fail Distribution -->
+<div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+<div class="flex items-center justify-between mb-6">
+<h4 class="font-bold">Pass/Fail Distribution</h4>
+<span class="material-symbols-outlined text-slate-400">info</span>
+</div>
+<div class="flex flex-row items-center justify-around h-48">
+<div class="relative w-40 h-40">
+<svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+<path class="text-slate-100 dark:text-slate-800" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-width="4"></path>
+<path class="text-primary" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-dasharray="{{ pass_percentage }}, 100" stroke-linecap="round" stroke-width="4"></path>
+</svg>
+<div class="absolute inset-0 flex flex-col items-center justify-center">
+<span class="text-2xl font-bold">{{ pass_percentage }}%</span>
+<span class="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Passing</span>
+</div>
+</div>
+<div class="space-y-4">
+<div class="flex items-center gap-3">
+<div class="w-3 h-3 rounded-full bg-primary"></div>
+<div>
+<p class="text-xs font-bold leading-none">Passing</p>
+<p class="text-[10px] text-slate-500">{{ passed }} Students</p>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<div class="w-3 h-3 rounded-full bg-slate-200 dark:bg-slate-700"></div>
+<div>
+<p class="text-xs font-bold leading-none">At Risk</p>
+<p class="text-[10px] text-slate-500">{{ at_risk }} Students</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Stats Summary -->
+<div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+<div class="flex items-center justify-between mb-6">
+<h4 class="font-bold">AI Analysis Summary</h4>
+</div>
+<div class="space-y-4">
+<div class="flex items-center gap-4 p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl">
+<span class="material-symbols-outlined text-emerald-500">check_circle</span>
+<div>
+<p class="text-sm font-bold">{{ passed }} students passing</p>
+<p class="text-xs text-slate-500">Marks ≥ 40</p>
+</div>
+</div>
+<div class="flex items-center gap-4 p-3 bg-rose-50 dark:bg-rose-900/20 rounded-xl">
+<span class="material-symbols-outlined text-rose-500">warning</span>
+<div>
+<p class="text-sm font-bold">{{ at_risk }} students at risk</p>
+<p class="text-xs text-slate-500">Marks &lt; 40</p>
+</div>
+</div>
+<div class="flex items-center gap-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
+<span class="material-symbols-outlined text-blue-500">analytics</span>
+<div>
+<p class="text-sm font-bold">{{ avg_marks }}% average marks</p>
+<p class="text-xs text-slate-500">Across all students</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Recent Student Predictions Table -->
+<div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+<div class="p-6 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center">
+<h4 class="font-bold">Recent Student Predictions</h4>
+<a href="{{ url_for('home') }}" class="text-xs font-bold text-primary hover:underline">View All Predictions →</a>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left">
+<thead class="bg-slate-50 dark:bg-slate-800/50 text-[10px] uppercase tracking-wider text-slate-500 font-bold">
+<tr>
+<th class="px-6 py-4">Student Name</th>
+<th class="px-6 py-4">Current Average</th>
+<th class="px-6 py-4">Predicted Grade</th>
+<th class="px-6 py-4">Status</th>
+<th class="px-6 py-4">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+{% if predictions %}
+{% for p in predictions %}
+<tr class="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-{{ p.risk_color }}-100 dark:bg-{{ p.risk_color }}-900/30 flex items-center justify-center text-{{ p.risk_color }}-600 text-[10px] font-bold">
+    {{ p.initials }}
+</div>
+<div>
+<p class="text-sm font-bold leading-none">{{ p.name }}</p>
+<p class="text-xs text-slate-500">{{ p.department }} • ID: {{ p.id }}</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4 text-sm font-medium">{{ p.marks }}%</td>
+<td class="px-6 py-4 text-sm font-bold text-primary">{{ p.predicted_grade }}</td>
+<td class="px-6 py-4">
+<span class="px-2 py-1 rounded-full text-[10px] font-bold 
+    {% if p.risk_level == 'Excellent' %}bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400
+    {% elif p.risk_level == 'Stable' %}bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400
+    {% elif p.risk_level == 'At Risk' %}bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400
+    {% else %}bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400{% endif %}">{{ p.risk_level }}</span>
+</td>
+<td class="px-6 py-4">
+<a href="{{ url_for('edit_student', id=p.id) }}" class="text-primary hover:underline text-sm font-bold">Review</a>
+</td>
+</tr>
+{% endfor %}
+{% else %}
+<tr>
+<td colspan="5" class="px-6 py-8 text-center text-slate-500">
+    No students found. <a href="{{ url_for('add_student') }}" class="text-primary hover:underline font-bold">Add one now →</a>
+</td>
+</tr>
+{% endif %}
+</tbody>
+</table>
+</div>
+<div class="p-4 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-200 dark:border-slate-800 flex justify-between items-center">
+<p class="text-xs text-slate-500">Showing {{ predictions|length }} students (sorted by marks, lowest first)</p>
+<a href="{{ url_for('students') }}" class="text-xs font-bold text-primary">View All Students →</a>
+</div>
+</div>
+</main>
+</div>
+</body>
+</html>

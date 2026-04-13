@@ -1,0 +1,79 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "documentId": {
+          "__rl": true,
+          "value": "1CaYqvs8dxDU9pbWjDK4kpZtHymrlWfIWvcaUqiCKQNs",
+          "mode": "list",
+          "cachedResultName": "Agentic Shiksha Hackathon Registration (Responses)",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1CaYqvs8dxDU9pbWjDK4kpZtHymrlWfIWvcaUqiCKQNs/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 668385362,
+          "mode": "list",
+          "cachedResultName": "Form responses 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1CaYqvs8dxDU9pbWjDK4kpZtHymrlWfIWvcaUqiCKQNs/edit#gid=668385362"
+        },
+        "event": "rowAdded",
+        "options": {}
+      },
+      "id": "561fd694-a666-4532-a8a3-714d89d4e724",
+      "name": "Google Sheets Trigger",
+      "type": "n8n-nodes-base.googleSheetsTrigger",
+      "typeVersion": 1,
+      "position": [-600, 100],
+      "credentials": {
+        "googleSheetsTriggerOAuth2Api": {
+          "id": "6L9pwUXTGuWL9r0r",
+          "name": "Google Sheets Trigger OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.EMAIL }}",
+        "subject": "=✅ Registration Confirmed — Agentic Shiksha Hackathon, {{ $json.NAME }}!",
+        "message": "=<!DOCTYPE html><html><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1.0\"></head><body style=\"margin:0;padding:0;background-color:#f4f4f7;font-family:'Segoe UI',Arial,sans-serif;\"><table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"background-color:#f4f4f7;padding:40px 0;\"><tr><td align=\"center\"><table width=\"600\" cellpadding=\"0\" cellspacing=\"0\" style=\"background-color:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);\"><tr><td style=\"background:linear-gradient(135deg,#4a90e2 0%,#357abd 100%);padding:40px 40px 30px;text-align:center;\"><h1 style=\"color:#ffffff;margin:0;font-size:26px;font-weight:700;letter-spacing:-0.5px;\">Agentic Shiksha Hackathon</h1><p style=\"color:rgba(255,255,255,0.85);margin:8px 0 0;font-size:14px;\">Registration Confirmation</p></td></tr><tr><td style=\"padding:36px 40px;\"><div style=\"background:#eaf4ff;border-left:4px solid #4a90e2;padding:14px 18px;border-radius:0 8px 8px 0;margin-bottom:24px;\"><p style=\"margin:0;font-size:18px;color:#333;\">Welcome, <strong>{{ $json.NAME }}</strong>! 🎉</p></div><p style=\"font-size:15px;color:#555;line-height:1.7;margin:0 0 20px;\">Your registration for the <strong>Agentic Shiksha Hackathon</strong> has been successfully confirmed.</p><table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"background:#f9fafb;border:1px solid #e8e8e8;border-radius:8px;margin:20px 0;\"><tr><td style=\"padding:20px;\"><table width=\"100%\"><tr><td style=\"padding:6px 0;color:#888;font-size:13px;width:120px;\">Name</td><td style=\"padding:6px 0;color:#333;font-size:14px;font-weight:600;\">{{ $json.NAME }}</td></tr><tr><td style=\"padding:6px 0;color:#888;font-size:13px;\">Email</td><td style=\"padding:6px 0;color:#333;font-size:14px;font-weight:600;\">{{ $json.EMAIL }}</td></tr><tr><td style=\"padding:6px 0;color:#888;font-size:13px;\">Class</td><td style=\"padding:6px 0;color:#333;font-size:14px;font-weight:600;\">{{ $json.CLASS }}</td></tr><tr><td style=\"padding:6px 0;color:#888;font-size:13px;\">Status</td><td style=\"padding:6px 0;color:#2ecc71;font-size:14px;font-weight:600;\">✅ Confirmed</td></tr></table></td></tr></table><p style=\"font-size:15px;color:#555;line-height:1.7;margin:20px 0;\">We're excited to have you on board! Stay tuned for further updates regarding the hackathon schedule, resources, and next steps.</p><p style=\"font-size:15px;color:#555;line-height:1.7;margin:20px 0;\">If you have any questions, feel free to reach out to us.</p></td></tr><tr><td style=\"background:#f9fafb;padding:24px 40px;text-align:center;border-top:1px solid #eee;\"><p style=\"margin:0;font-size:13px;color:#999;\">Agentic Shiksha Hackathon Team</p><p style=\"margin:6px 0 0;font-size:12px;color:#bbb;\">This is an automated confirmation. Please do not reply.</p></td></tr></table></td></tr></table></body></html>",
+        "options": {}
+      },
+      "id": "0274192b-3fba-4e9c-9c20-d7784ade5fcb",
+      "name": "Send Confirmation Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [-300, 100],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "59xcHCraRw1SpQFp",
+          "name": "Gmail OAuth2 API"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Google Sheets Trigger": {
+      "main": [
+        [
+          {
+            "node": "Send Confirmation Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "6938b0fe6447d1f20be50912327027aa72bedcab74a250a610b7881c520c45cb"
+  }
+}

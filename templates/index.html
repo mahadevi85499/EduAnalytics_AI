@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Predictions - EduAnalytics Admin</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+    tailwind.config = {
+        darkMode: "class",
+        theme: {
+            extend: {
+                colors: {
+                    "primary": "#ec5b13",
+                    "background-light": "#f8f6f6",
+                    "background-dark": "#221610",
+                },
+                fontFamily: {
+                    "display": ["Public Sans"]
+                },
+                borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+            },
+        },
+    }
+</script>
+<style>
+    body { font-family: 'Public Sans', sans-serif; }
+    .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+    .filled-icon { font-variation-settings: 'FILL' 1; }
+</style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display">
+<div class="flex h-screen overflow-hidden">
+<!-- Sidebar -->
+<aside class="w-64 flex-shrink-0 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-y-auto">
+<div class="p-6 flex items-center gap-3">
+<div class="size-8 bg-primary rounded flex items-center justify-center text-white">
+<span class="material-symbols-outlined">analytics</span>
+</div>
+<div>
+<h1 class="text-slate-900 dark:text-white text-base font-bold leading-none">EduAnalytics</h1>
+<p class="text-slate-500 dark:text-slate-400 text-xs font-medium">Admin Portal</p>
+</div>
+</div>
+<nav class="px-4 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors" href="{{ url_for('dashboard') }}">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="text-sm font-medium">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors" href="{{ url_for('students') }}">
+<span class="material-symbols-outlined">group</span>
+<span class="text-sm font-medium">Students</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 bg-primary/10 text-primary rounded-xl transition-colors" href="{{ url_for('home') }}">
+<span class="material-symbols-outlined filled-icon">trending_up</span>
+<span class="text-sm font-semibold">Predictions</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors" href="{{ url_for('add_student') }}">
+<span class="material-symbols-outlined">person_add</span>
+<span class="text-sm font-medium">Add Student</span>
+</a>
+</nav>
+<div class="absolute bottom-0 w-64 p-4 border-t border-slate-200 dark:border-slate-800">
+<div class="flex items-center gap-3 p-2">
+<div class="size-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-sm">AR</div>
+<div class="flex-1 min-w-0">
+<p class="text-sm font-semibold truncate">Alex Rivera</p>
+<p class="text-xs text-slate-500 truncate">Senior Admin</p>
+</div>
+<a href="{{ url_for('logout') }}"><span class="material-symbols-outlined text-slate-400">logout</span></a>
+</div>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="flex-1 flex flex-col overflow-y-auto">
+<!-- Header -->
+<header class="h-16 border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md flex items-center justify-between px-8 sticky top-0 z-10">
+<h2 class="text-lg font-bold">Student Performance Predictions</h2>
+<div class="flex items-center gap-4">
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">search</span>
+<input id="searchInput" class="pl-10 pr-4 py-1.5 bg-slate-100 dark:bg-slate-800 border-none rounded-lg text-sm focus:ring-2 focus:ring-primary w-64" placeholder="Search students..." type="text" onkeyup="filterTable()"/>
+</div>
+<button class="size-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+</div>
+</header>
+<div class="p-8">
+<!-- Stats Row -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+<div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800">
+<div class="flex items-center justify-between mb-2">
+<span class="text-sm font-medium text-slate-500">At Risk Students</span>
+<span class="material-symbols-outlined text-red-500">warning</span>
+</div>
+<div class="flex items-baseline gap-2">
+<span class="text-3xl font-bold">{{ at_risk_count }}</span>
+{% if total > 0 %}
+<span class="text-xs font-bold text-red-500">{{ "%.1f"|format(at_risk_count / total * 100) }}%</span>
+{% endif %}
+</div>
+<p class="text-xs text-slate-400 mt-2">Requires immediate attention</p>
+</div>
+<div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800">
+<div class="flex items-center justify-between mb-2">
+<span class="text-sm font-medium text-slate-500">Stable Progress</span>
+<span class="material-symbols-outlined text-blue-500">check_circle</span>
+</div>
+<div class="flex items-baseline gap-2">
+<span class="text-3xl font-bold">{{ stable_count }}</span>
+{% if total > 0 %}
+<span class="text-xs font-bold text-blue-500">{{ "%.1f"|format(stable_count / total * 100) }}%</span>
+{% endif %}
+</div>
+<p class="text-xs text-slate-400 mt-2">Performing as expected</p>
+</div>
+<div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800">
+<div class="flex items-center justify-between mb-2">
+<span class="text-sm font-medium text-slate-500">Excellent Progress</span>
+<span class="material-symbols-outlined text-emerald-500">stars</span>
+</div>
+<div class="flex items-baseline gap-2">
+<span class="text-3xl font-bold">{{ excellent_count }}</span>
+{% if total > 0 %}
+<span class="text-xs font-bold text-emerald-500">{{ "%.1f"|format(excellent_count / total * 100) }}%</span>
+{% endif %}
+</div>
+<p class="text-xs text-slate-400 mt-2">Exceeding learning benchmarks</p>
+</div>
+</div>
+<!-- Main Dashboard Area -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+<!-- Predictive List Table -->
+<div class="lg:col-span-2 space-y-6">
+<div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+<div class="p-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+<h3 class="font-bold">Student Prediction Rankings</h3>
+<a href="{{ url_for('add_student') }}" class="text-sm bg-primary text-white px-4 py-1.5 rounded-lg font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">add</span> Add Student
+</a>
+</div>
+<div class="overflow-x-auto">
+<table id="predictionsTable" class="w-full text-left">
+<thead class="bg-slate-50 dark:bg-slate-800/50 text-slate-500 text-xs font-bold uppercase tracking-wider">
+<tr>
+<th class="px-6 py-3">Student Name</th>
+<th class="px-6 py-3">Success Prob.</th>
+<th class="px-6 py-3">Risk Level</th>
+<th class="px-6 py-3">Primary Factor</th>
+<th class="px-6 py-3">Action</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+{% if predictions %}
+{% for p in predictions %}
+<tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 student-row">
+<td class="px-6 py-4 flex items-center gap-3">
+<div class="size-8 rounded-full bg-{{ p.risk_color }}-100 dark:bg-{{ p.risk_color }}-900/30 flex items-center justify-center text-{{ p.risk_color }}-600 text-[10px] font-bold">
+    {{ p.initials }}
+</div>
+<div>
+    <div class="text-sm font-medium student-name">{{ p.name }}</div>
+    <div class="text-[10px] text-slate-400">{{ p.department }} • ID: {{ p.id }}</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+    <div class="w-16 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+        <div class="h-full bg-{{ p.risk_color }}-500" style="width: {{ p.success_prob }}%"></div>
+    </div>
+    <span class="text-xs font-bold text-{{ p.risk_color }}-500">{{ p.success_prob }}%</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="px-2 py-1 text-[10px] font-bold uppercase rounded bg-{{ p.risk_color }}-100 text-{{ p.risk_color }}-600 dark:bg-{{ p.risk_color }}-900/30 dark:text-{{ p.risk_color }}-400">{{ p.risk_level }}</span>
+</td>
+<td class="px-6 py-4 text-xs text-slate-500">{{ p.primary_factor }}</td>
+<td class="px-6 py-4">
+<a href="{{ url_for('edit_student', id=p.id) }}" class="text-primary text-sm font-bold hover:underline">Review</a>
+</td>
+</tr>
+{% endfor %}
+{% else %}
+<tr>
+<td colspan="5" class="px-6 py-12 text-center">
+    <div class="flex flex-col items-center gap-3">
+        <span class="material-symbols-outlined text-4xl text-slate-300">school</span>
+        <p class="text-slate-500 font-medium">No students found</p>
+        <a href="{{ url_for('add_student') }}" class="text-primary text-sm font-bold hover:underline">Add your first student →</a>
+    </div>
+</td>
+</tr>
+{% endif %}
+</tbody>
+</table>
+</div>
+<div class="p-4 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-200 dark:border-slate-800 flex justify-between items-center">
+<p class="text-xs text-slate-500">Showing {{ predictions|length }} of {{ total }} predictions</p>
+</div>
+</div>
+</div>
+<!-- Analysis Sidebar -->
+<div class="space-y-6">
+<!-- Influencing Factors -->
+<div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6">
+<h3 class="font-bold mb-4">Key Risk Drivers</h3>
+<div class="space-y-4">
+<div>
+<div class="flex justify-between text-xs mb-1">
+<span class="font-medium">Engagement Rate</span>
+<span class="text-slate-400">Weight: 22%</span>
+</div>
+<div class="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full">
+<div class="h-full bg-primary rounded-full w-[85%]"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between text-xs mb-1">
+<span class="font-medium">Academic Marks</span>
+<span class="text-slate-400">Weight: 35%</span>
+</div>
+<div class="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full">
+<div class="h-full bg-primary rounded-full w-[70%]"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between text-xs mb-1">
+<span class="font-medium">Attendance</span>
+<span class="text-slate-400">Weight: 25%</span>
+</div>
+<div class="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full">
+<div class="h-full bg-primary rounded-full w-[55%]"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between text-xs mb-1">
+<span class="font-medium">Quiz Scores</span>
+<span class="text-slate-400">Weight: 18%</span>
+</div>
+<div class="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full">
+<div class="h-full bg-primary rounded-full w-[40%]"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- AI Confidence Card -->
+<div class="bg-primary/5 dark:bg-primary/10 border border-primary/20 rounded-xl p-6">
+<div class="flex items-center gap-2 mb-3">
+<span class="material-symbols-outlined text-primary">psychology</span>
+<h3 class="font-bold text-primary">AI Logic Insight</h3>
+</div>
+<p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+    {% if total > 0 %}
+    Analyzed <strong>{{ total }}</strong> students. <strong>{{ at_risk_count }}</strong> flagged as at-risk based on weighted analysis of marks (35%), attendance (25%), engagement (22%), and quiz scores (18%).
+    {% else %}
+    No student data available yet. Add students to see AI-powered predictions and risk analysis.
+    {% endif %}
+</p>
+<a href="{{ url_for('add_student') }}" class="mt-4 w-full py-2 bg-primary text-white font-bold rounded-lg text-sm inline-block text-center">Add New Student</a>
+</div>
+<!-- Quick Action Card -->
+<div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6">
+<h3 class="font-bold mb-4">Quick Actions</h3>
+<div class="grid grid-cols-2 gap-3">
+<a href="{{ url_for('add_student') }}" class="flex flex-col items-center justify-center p-3 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+<span class="material-symbols-outlined text-primary mb-1">person_add</span>
+<span class="text-[10px] font-bold uppercase tracking-wide">Add Student</span>
+</a>
+<a href="{{ url_for('students') }}" class="flex flex-col items-center justify-center p-3 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+<span class="material-symbols-outlined text-primary mb-1">list</span>
+<span class="text-[10px] font-bold uppercase tracking-wide">View All</span>
+</a>
+<a href="{{ url_for('dashboard') }}" class="flex flex-col items-center justify-center p-3 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+<span class="material-symbols-outlined text-primary mb-1">bar_chart</span>
+<span class="text-[10px] font-bold uppercase tracking-wide">Dashboard</span>
+</a>
+<a href="{{ url_for('login') }}" class="flex flex-col items-center justify-center p-3 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+<span class="material-symbols-outlined text-primary mb-1">settings</span>
+<span class="text-[10px] font-bold uppercase tracking-wide">Settings</span>
+</a>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+<script>
+function filterTable() {
+    const query = document.getElementById('searchInput').value.toLowerCase();
+    const rows = document.querySelectorAll('.student-row');
+    rows.forEach(row => {
+        const name = row.querySelector('.student-name').textContent.toLowerCase();
+        row.style.display = name.includes(query) ? '' : 'none';
+    });
+}
+</script>
+</body>
+</html>
