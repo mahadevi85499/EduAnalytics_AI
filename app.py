@@ -1,13 +1,17 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session
+from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 import sqlite3
 import os
 import random
+import requests
+import json
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
 
 DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "students.db")
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
+GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
 
 # ---------------- DATABASE SETUP ----------------
 def get_db():
@@ -171,6 +175,71 @@ def predict_student(student):
     }
 
 
+# ---------------- GROQ AI ANALYSIS ----------------
+def ai_analyze_students(predictions, mode="all", question=None):
+    """Send student data to Groq API for intelligent analysis."""
+    if not predictions:
+        return "No student data available for analysis."
+
+    # Build student summary for the AI
+    student_summaries = []
+    for p in predictions:
+        student_summaries.append(
+            f"- {p['name']} (ID:{p['id']}, Dept:{p['department']}): "
+            f"Marks={p['marks']}%, Attendance={p['attendance']}%, "
+            f"Engagement={p['engagement']}%, Quiz={p['quiz_scores']}%, "
+            f"Success Probability={p['success_prob']}%, Risk={p['risk_level']}, "
+            f"Predicted Grade={p['predicted_grade']}, Primary Risk Factor={p['primary_factor']}"
+        )
+
+    student_data_text = "\n".join(student_summaries)
+
+    if mode == "individual":
+        system_prompt = (
+            "You are an expert educational analyst AI for EduAnalytics. "
+            "Analyze this individual student's academic data and provide: "
+            "1) A brief performance summary, 2) Key strengths, 3) Areas needing improvement, "
+            "4) Specific actionable recommendations for the student. "
+            "Be concise, insightful, and encouraging. Use 3-5 sentences max."
+        )
+    else:
+        system_prompt = (
+            "You are an expert educational analyst AI for EduAnalytics. "
+            "Analyze the overall class performance data and provide: "
+            "1) A brief class overview, 2) Key trends or patterns, "
+            "3) Students needing immediate attention, 4) Actionable recommendations for educators. "
+            "Be concise and data-driven. Use 4-6 sentences max."
+        )
+
+    user_message = f"Student Data:\n{student_data_text}"
+    if question:
+        user_message += f"\n\nUser's Question: {question}"
+
+    try:
+        response = requests.post(
+            GROQ_API_URL,
+            headers={
+                "Authorization": f"Bearer {GROQ_API_KEY}",
+                "Content-Type": "application/json"
+            },
+            json={
+                "model": "llama-3.3-70b-versatile",
+                "messages": [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_message}
+                ],
+                "temperature": 0.7,
+                "max_tokens": 500
+            },
+            timeout=15
+        )
+        response.raise_for_status()
+        data = response.json()
+        return data["choices"][0]["message"]["content"].strip()
+    except Exception as e:
+        return f"AI analysis unavailable: {str(e)}"
+
+
 # ---------------- HOME / PREDICTIONS ----------------
 @app.route("/")
 def home():
@@ -189,13 +258,17 @@ def home():
 
     conn.close()
 
+    # Generate AI insight for all students
+    ai_insight = ai_analyze_students(predictions, mode="all")
+
     return render_template(
         "index.html",
         predictions=predictions,
         total=total,
         at_risk_count=at_risk_count,
         stable_count=stable_count,
-        excellent_count=excellent_count
+        excellent_count=excellent_count,
+        ai_insight=ai_insight
     )
 
 
@@ -412,6 +485,40 @@ def delete_student(id):
     conn.close()
     flash("Student deleted successfully.", "success")
     return redirect(url_for("students"))
+
+
+# ---------------- AI ANALYSIS ENDPOINTS ----------------
+@app.route("/ai_analyze", methods=["POST"])
+def ai_analyze():
+    """AI analysis for all students or with a custom question."""
+    question = request.form.get("question", "").strip()
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM students ORDER BY id DESC")
+    students_raw = cursor.fetchall()
+    predictions = [predict_student(s) for s in students_raw]
+    conn.close()
+
+    insight = ai_analyze_students(predictions, mode="all", question=question if question else None)
+    return jsonify({"insight": insight})
+
+
+@app.route("/ai_analyze/<int:id>", methods=["POST"])
+def ai_analyze_student(id):
+    """AI analysis for an individual student."""
+    question = request.form.get("question", "").strip()
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM students WHERE id=?", (id,))
+    student = cursor.fetchone()
+    conn.close()
+
+    if not student:
+        return jsonify({"insight": "Student not found."})
+
+    prediction = predict_student(student)
+    insight = ai_analyze_students([prediction], mode="individual", question=question if question else None)
+    return jsonify({"insight": insight, "student_name": prediction['name']})
 
 
 # ---------------- RUN APP ----------------
